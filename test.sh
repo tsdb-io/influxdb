@@ -9,7 +9,7 @@
 #      1: race enabled 64bit tests
 #      2: normal 32bit tests
 #      3: tsi build
-#      4: go 1.12
+#      4: go 1.13
 #      count: print the number of test environments
 #      *: to run all tests in parallel containers
 #
@@ -122,14 +122,6 @@ case $ENVIRONMENT_INDEX in
         INFLUXDB_DATA_INDEX_VERSION="tsi1"
         run_test_docker Dockerfile_build_ubuntu64 test_64bit --test --junit-report
         rc=$?
-        ;;
-    4)
-        # go1.12
-        run_test_docker Dockerfile_build_ubuntu64_go1.12 test_64bit --test --junit-report
-        rc=$?
-        ;;
-    "count")
-        echo $ENV_COUNT
         ;;
     *)
         echo "No individual test environment specified running tests for all $ENV_COUNT environments."
