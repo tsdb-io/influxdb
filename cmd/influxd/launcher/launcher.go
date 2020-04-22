@@ -27,6 +27,8 @@ import (
 	"github.com/influxdata/influxdb/v2/inmem"
 	"github.com/influxdata/influxdb/v2/internal/fs"
 	"github.com/influxdata/influxdb/v2/kit/cli"
+	"github.com/influxdata/influxdb/v2/kit/feature"
+	overrideflagger "github.com/influxdata/influxdb/v2/kit/feature/override"
 	"github.com/influxdata/influxdb/v2/kit/prom"
 	"github.com/influxdata/influxdb/v2/kit/signals"
 	"github.com/influxdata/influxdb/v2/kit/tracing"
@@ -309,8 +311,12 @@ func buildLauncherCommand(l *Launcher, cmd *cobra.Command) {
 			Default: 10,
 			Desc:    "the number of queries that are allowed to be awaiting execution before new queries are rejected",
 		},
+		{
+			DestP: &l.featureFlags,
+			Flag:  "feature-flags",
+			Desc:  "feature flag overrides",
+		},
 	}
-
 	cli.BindOptions(cmd, opts)
 	cmd.AddCommand(inspect.NewCommand())
 }
@@ -338,6 +344,8 @@ type Launcher struct {
 
 	enableNewMetaStore   bool
 	newMetaStoreReadOnly bool
+
+	featureFlags map[string]string
 
 	// Query options.
 	concurrencyQuota                int
@@ -864,6 +872,18 @@ func (m *Launcher) run(ctx context.Context) (err error) {
 		Addr: m.httpBindAddress,
 	}
 
+	flagger := feature.DefaultFlagger()
+	if len(m.featureFlags) > 0 {
+		f, err := overrideflagger.Make(m.featureFlags)
+		if err != nil {
+			m.log.Error("Failed to configure feature flag overrides",
+				zap.Error(err), zap.Any("overrides", m.featureFlags))
+			return err
+		}
+		m.log.Info("Running with feature flag overrides", zap.Any("config", m.featureFlags))
+		flagger = f
+	}
+
 	m.apibackend = &http.APIBackend{
 		AssetsPath:           m.assetsPath,
 		HTTPErrorHandler:     kithttp.ErrorHandler(0),
@@ -906,6 +926,7 @@ func (m *Launcher) run(ctx context.Context) (err error) {
 		OrgLookupService:                m.kvService,
 		WriteEventRecorder:              infprom.NewEventRecorder("write"),
 		QueryEventRecorder:              infprom.NewEventRecorder("query"),
+		Flagger:                         flagger,
 	}
 
 	m.reg.MustRegister(m.apibackend.PrometheusCollectors()...)
