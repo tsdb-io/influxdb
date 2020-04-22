@@ -146,3 +146,8 @@ func (s *ReadTagValuesPhysSpec) Copy() plan.ProcedureSpec {
 	ns.TagKey = s.TagKey
 	return ns
 }
+
+type ReadWindowAggregatePhysSpec struct {
+	ReadRangePhysSpec
+	Fn []string
+}
