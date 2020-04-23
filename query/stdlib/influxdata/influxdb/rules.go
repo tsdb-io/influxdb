@@ -19,9 +19,7 @@ func init() {
 		PushDownReadTagKeysRule{},
 		PushDownReadTagValuesRule{},
 		SortedPivotRule{},
-		PushDownWindowMinRule{},
-		PushDownWindowMaxRule{},
-		PushDownWindowMeanRule{},
+		// PushDownWindowAggregateRule{},
 	)
 }
 
@@ -602,14 +600,40 @@ func (SortedPivotRule) Rewrite(ctx context.Context, pn plan.Node) (plan.Node, bo
 }
 
 //
-// Push Down of window aggregates. The main part of the rewrite is reused, as
-// these have a comon form: ReadRangePhys |> window |> fn()
+// Push Down of window aggregates.
+// ReadRangePhys |> window |> min
 //
+type PushDownWindowAggregateRule struct{}
 
-func rewriteWindowAggregate(fn string, fnNode plan.Node) (plan.Node, bool, error) {
+func (PushDownWindowAggregateRule) Name() string {
+	return "PushDownWindowAggregateRule"
+}
+
+func (rule PushDownWindowAggregateRule) Pattern() plan.Pattern {
+	return plan.UnionPat(
+		[]plan.ProcedureKind{
+			universe.MinKind,
+			universe.MaxKind,
+			universe.MeanKind,
+		},
+		plan.Pat(universe.WindowKind, plan.Pat(ReadRangePhysKind)))
+}
+
+func (PushDownWindowAggregateRule) Rewrite(ctx context.Context, pn plan.Node) (plan.Node, bool, error) {
+	// Retrieve the nodes and specs for all of the predecessors.
+	fnNode := pn
+	var fn string
+
+	switch fnNode.Kind() {
+	case universe.MinKind:
+		fn = "min"
+	case universe.MaxKind:
+		fn = "max"
+	case universe.MeanKind:
+		fn = "mean"
+	}
+
 	windowNode := fnNode.Predecessors()[0]
-	//windowSpec := windowNode.ProcedureSpec().(*universe.WindowProcedureSpec)
-
 	fromNode := windowNode.Predecessors()[0]
 	fromSpec := fromNode.ProcedureSpec().(*ReadRangePhysSpec)
 
@@ -621,70 +645,4 @@ func rewriteWindowAggregate(fn string, fnNode plan.Node) (plan.Node, bool, error
 		ReadRangePhysSpec: *fromSpec.Copy().(*ReadRangePhysSpec),
 		Fn:                []string{fn},
 	}), true, nil
-}
-
-//
-// ReadRangePhys |> window |> min
-//
-type PushDownWindowMinRule struct{}
-
-func (PushDownWindowMinRule) Name() string {
-	return "PushDownWindowMinRule"
-}
-
-func (rule PushDownWindowMinRule) Pattern() plan.Pattern {
-	return plan.Pat(universe.MinKind,
-		plan.Pat(universe.WindowKind, plan.Pat(ReadRangePhysKind)))
-}
-
-func (PushDownWindowMinRule) Rewrite(pn plan.Node) (plan.Node, bool, error) {
-	// Retrieve the nodes and specs for all of the predecessors.
-	minNode := pn
-	//minSpec := pn.ProcedureSpec().(*universe.MinProcedureSpec)
-
-	return rewriteWindowAggregate("min", minNode)
-}
-
-//
-// ReadRangePhys |> window |> max
-//
-type PushDownWindowMaxRule struct{}
-
-func (PushDownWindowMaxRule) Name() string {
-	return "PushDownWindowMaxRule"
-}
-
-func (rule PushDownWindowMaxRule) Pattern() plan.Pattern {
-	return plan.Pat(universe.MaxKind,
-		plan.Pat(universe.WindowKind, plan.Pat(ReadRangePhysKind)))
-}
-
-func (PushDownWindowMaxRule) Rewrite(pn plan.Node) (plan.Node, bool, error) {
-	// Retrieve the nodes and specs for all of the predecessors.
-	maxNode := pn
-	//maxSpec := pn.ProcedureSpec().(*universe.MaxProcedureSpec)
-
-	return rewriteWindowAggregate("max", maxNode)
-}
-
-//
-// ReadRangePhys |> window |> mean
-//
-type PushDownWindowMeanRule struct{}
-
-func (PushDownWindowMeanRule) Name() string {
-	return "PushDownWindowMeanRule"
-}
-
-func (rule PushDownWindowMeanRule) Pattern() plan.Pattern {
-	return plan.Pat(universe.MeanKind,
-		plan.Pat(universe.WindowKind, plan.Pat(ReadRangePhysKind)))
-}
-
-func (PushDownWindowMeanRule) Rewrite(pn plan.Node) (plan.Node, bool, error) {
-	// Retrieve the nodes and specs for all of the predecessors.
-	meanNode := pn
-	//meanSpec := pn.ProcedureSpec().(*universe.MeanProcedureSpec)
-
-	return rewriteWindowAggregate("mean", meanNode)
 }
