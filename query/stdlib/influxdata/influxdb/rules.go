@@ -610,7 +610,7 @@ func (PushDownWindowAggregateRule) Name() string {
 }
 
 func (rule PushDownWindowAggregateRule) Pattern() plan.Pattern {
-	return plan.UnionPat(
+	return plan.OneOf(
 		[]plan.ProcedureKind{
 			universe.MinKind,
 			universe.MaxKind,
