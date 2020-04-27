@@ -13,12 +13,15 @@ var (
 	bucket = []byte("dbrpv1")
 )
 
+var _ influxdb.DBRPMappingServiceV2 = (*DBRPMappingAuthorzedService)(nil)
+
 type Service struct {
-	store kv.Store
-	IDGen influxdb.IDGenerator
+	store     kv.Store
+	bucketSvc influxdb.BucketService
+	IDGen     influxdb.IDGenerator
 }
 
-func NewService(ctx context.Context, st kv.Store) (influxdb.DBRPMappingServiceV2, error) {
+func NewService(ctx context.Context, bucketSvc influxdb.BucketService, st kv.Store) (influxdb.DBRPMappingServiceV2, error) {
 	if err := st.Update(ctx, func(tx kv.Tx) error {
 		if _, err := tx.Bucket(bucket); err != nil {
 			return err
@@ -28,13 +31,14 @@ func NewService(ctx context.Context, st kv.Store) (influxdb.DBRPMappingServiceV2
 		return nil, err
 	}
 	return &Service{
-		store: st,
-		IDGen: snowflake.NewDefaultIDGenerator(),
+		store:     st,
+		bucketSvc: bucketSvc,
+		IDGen:     snowflake.NewDefaultIDGenerator(),
 	}, nil
 }
 
 // FindBy returns the dbrp mapping the for cluster, db and rp.
-func (s *Service) FindByID(ctx context.Context, id influxdb.ID) (*influxdb.DBRPMapping, error) {
+func (s *Service) FindByID(ctx context.Context, orgID, id influxdb.ID) (*influxdb.DBRPMapping, error) {
 	encodedID, err := id.Encode()
 	if err != nil {
 		return nil, ErrInvalidDBRPID
@@ -53,6 +57,10 @@ func (s *Service) FindByID(ctx context.Context, id influxdb.ID) (*influxdb.DBRPM
 		}
 		return nil
 	})
+
+	if err != nil {
+		return nil, err
+	}
 
 	dbrp := &influxdb.DBRPMapping{}
 	return dbrp, json.Unmarshal(b, dbrp)
@@ -101,8 +109,12 @@ func (s *Service) Create(ctx context.Context, dbrp *influxdb.DBRPMapping) error 
 		return ErrInternalServiceError(err)
 	}
 
+	if _, err := s.bucketSvc.FindBucketByID(ctx, dbrp.BucketID); err != nil {
+		return err
+	}
+
 	// if a dbrp with this particular ID already exists an error is returned
-	if _, err := s.FindByID(ctx, dbrp.ID); err == nil {
+	if _, err := s.FindByID(ctx, dbrp.OrganizationID, dbrp.ID); err == nil {
 		return ErrDBRPAlreadyExist(err)
 	}
 	err = s.store.Update(ctx, func(tx kv.Tx) error {
@@ -130,7 +142,7 @@ func (s *Service) Update(ctx context.Context, dbrp *influxdb.DBRPMapping) error 
 		return ErrInternalServiceError(err)
 	}
 
-	if _, err := s.FindByID(ctx, dbrp.ID); err != nil {
+	if _, err := s.FindByID(ctx, dbrp.OrganizationID, dbrp.ID); err != nil {
 		return ErrDBRPNotFound
 	}
 
@@ -150,7 +162,7 @@ func (s *Service) Update(ctx context.Context, dbrp *influxdb.DBRPMapping) error 
 
 // Delete removes a dbrp mapping.
 // Deleting a mapping that does not exists is not an error.
-func (s *Service) Delete(ctx context.Context, id influxdb.ID) error {
+func (s *Service) Delete(ctx context.Context, orgID, id influxdb.ID) error {
 	encodedID, err := id.Encode()
 	if err != nil {
 		return ErrInternalServiceError(err)

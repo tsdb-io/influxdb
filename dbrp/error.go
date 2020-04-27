@@ -33,6 +33,14 @@ var (
 	}
 )
 
+func ErrUnauthorized(err error) *influxdb.Error {
+	return &influxdb.Error{
+		Code: influxdb.EUnauthorized,
+		Msg:  "unauthorized",
+		Err:  err,
+	}
+}
+
 // ErrInvalidDBRPIDError is used when a service was provided an invalid ID.
 func ErrInvalidDBRPIDError(err error) *influxdb.Error {
 	return &influxdb.Error{

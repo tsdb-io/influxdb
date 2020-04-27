@@ -69,18 +69,14 @@ func (h *DBRPHandler) handlePostDBRP(w http.ResponseWriter, r *http.Request) {
 
 func (h *DBRPHandler) handleGetDBRPs(w http.ResponseWriter, r *http.Request) {
 	filter := influxdb.DBRPMappingFilter{}
-	orgID := r.URL.Query().Get("orgID")
-	if orgID != "" {
-		id, err := influxdb.IDFromString(orgID)
-		if err != nil {
-			h.api.Err(w, influxdb.ErrInvalidID)
-			return
-		}
-		filter.OrgID = id
-	} else {
-		h.api.Err(w, influxdb.ErrOrgNotFound)
+
+	orgID, err := getOrgIDFromHTTPRequest(r)
+	if err != nil {
+		h.api.Err(w, err)
 		return
 	}
+
+	filter.OrgID = &orgID
 
 	dbrps, _, err := h.dbrpSvc.FindMany(r.Context(), filter)
 	if err != nil {
@@ -116,7 +112,13 @@ func (h *DBRPHandler) handleGetDBRP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbrp, err := h.dbrpSvc.FindByID(ctx, i)
+	orgID, err := getOrgIDFromHTTPRequest(r)
+	if err != nil {
+		h.api.Err(w, err)
+		return
+	}
+
+	dbrp, err := h.dbrpSvc.FindByID(ctx, orgID, i)
 	if err != nil {
 		h.api.Err(w, err)
 		return
@@ -150,7 +152,13 @@ func (h *DBRPHandler) handlePatchDBRP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbrp, err := h.dbrpSvc.FindByID(ctx, i)
+	orgID, err := getOrgIDFromHTTPRequest(r)
+	if err != nil {
+		h.api.Err(w, err)
+		return
+	}
+
+	dbrp, err := h.dbrpSvc.FindByID(ctx, orgID, i)
 	if err != nil {
 		h.api.Err(w, err)
 		return
@@ -197,10 +205,29 @@ func (h *DBRPHandler) handleDeleteDBRP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.dbrpSvc.Delete(ctx, i)
+	orgID, err := getOrgIDFromHTTPRequest(r)
 	if err != nil {
 		h.api.Err(w, err)
 		return
 	}
+
+	if err := h.dbrpSvc.Delete(ctx, orgID, i); err != nil {
+		h.api.Err(w, err)
+		return
+	}
+
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func getOrgIDFromHTTPRequest(r *http.Request) (influxdb.ID, error) {
+	var orgID influxdb.ID
+	orgIDraw := r.URL.Query().Get("orgID")
+	if orgIDraw != "" {
+		if err := orgID.DecodeFromString(orgIDraw); err != nil {
+			return 0, influxdb.ErrInvalidID
+		}
+	} else {
+		return 0, influxdb.ErrOrgNotFound
+	}
+	return orgID, nil
 }

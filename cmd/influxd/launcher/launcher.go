@@ -775,10 +775,12 @@ func (m *Launcher) run(ctx context.Context) (err error) {
 		}
 	}
 
-	dbrpSvc, err := dbrp.NewService(ctx, m.kvStore)
+	dbrpSvc, err := dbrp.NewService(ctx, authorizer.NewBucketService(bucketSvc, userResourceSvc), m.kvStore)
 	if err != nil {
 		return err
 	}
+
+	dbrpSvc = dbrp.DBRPMappingAuthorzedService{DBRPMappingServiceV2: dbrpSvc}
 
 	var checkSvc platform.CheckService
 	{

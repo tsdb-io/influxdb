@@ -400,6 +400,11 @@ paths:
       summary: Get a database retention policy mapping
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
+        - in: query
+          name: orgID
+          description: Specifies the organization ID of the template.
+          schema:
+            type: string
         - in: path
           name: dbrpID
           schema:
@@ -433,6 +438,11 @@ paths:
               $ref: "#/components/schemas/DBRPUpdate"
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
+        - in: query
+          name: orgID
+          description: Specifies the organization ID of the template.
+          schema:
+            type: string
         - in: path
           name: dbrpID
           schema:
@@ -465,6 +475,11 @@ paths:
       summary: Delete a database retention policy
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
+        - in: query
+          name: orgID
+          description: Specifies the organization ID of the template.
+          schema:
+            type: string
         - in: path
           name: dbrpID
           schema:
