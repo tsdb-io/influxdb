@@ -25,6 +25,16 @@ func (s *Service) CreateAuthorization(ctx context.Context, a *influxdb.Authoriza
 		return influxdb.ErrUnableToCreateToken
 	}
 
+	err := s.store.View(ctx, func(tx kv.Tx) error {
+		if err := s.store.uniqueAuthToken(ctx, tx, a); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return ErrTokenAlreadyExistsError
+	}
+
 	if a.Token == "" {
 		token, err := s.tokenGenerator.Token()
 		if err != nil {

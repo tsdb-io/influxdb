@@ -52,8 +52,8 @@ func initAuthorizationService(f itesting.AuthorizationFields, t *testing.T) (inf
 		}
 	}
 
-	for _, u := range f.Authorizations {
-		if err := svc.CreateAuthorization(ctx, u); err != nil {
+	for _, a := range f.Authorizations {
+		if err := svc.CreateAuthorization(ctx, a); err != nil {
 			t.Fatalf("failed to populate authorizations: %v", err)
 		}
 	}

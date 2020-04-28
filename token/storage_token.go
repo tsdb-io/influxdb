@@ -51,7 +51,14 @@ func decodeAuthorization(b []byte, a *influxdb.Authorization) error {
 // CreateAuthorization takes an Authorization object and saves it in storage using its token
 // using its token property as an index
 func (s *Store) CreateAuthorization(ctx context.Context, tx kv.Tx, a *influxdb.Authorization) error {
+	// if the provided ID is invalid, or already maps to an existing Auth, then generate a new one
 	if !a.ID.Valid() {
+		id, err := s.generateSafeID(ctx, tx, authBucket)
+		if err != nil {
+			return nil
+		}
+		a.ID = id
+	} else if err := uniqueID(ctx, tx, a.ID); err != nil {
 		id, err := s.generateSafeID(ctx, tx, authBucket)
 		if err != nil {
 			return nil
@@ -81,16 +88,16 @@ func (s *Store) CreateAuthorization(ctx context.Context, tx kv.Tx, a *influxdb.A
 		return err
 	}
 
-	b, err := tx.Bucket(authBucket)
-	if err != nil {
-		return err
-	}
-
 	if err := idx.Put(authIndexKey(a.Token), encodedID); err != nil {
 		return &influxdb.Error{
 			Code: influxdb.EInternal,
 			Err:  err,
 		}
+	}
+
+	b, err := tx.Bucket(authBucket)
+	if err != nil {
+		return err
 	}
 
 	if err := b.Put(encodedID, v); err != nil {
@@ -100,7 +107,6 @@ func (s *Store) CreateAuthorization(ctx context.Context, tx kv.Tx, a *influxdb.A
 	}
 
 	return nil
-
 }
 
 // GetAuthorization gets an authorization by its ID from the auth bucket in kv
@@ -311,11 +317,37 @@ func unique(ctx context.Context, tx kv.Tx, indexBucket, indexKey []byte) error {
 	}
 
 	_, err = bucket.Get(indexKey)
-	// if not found then this is  _unique_.
+	// if not found then this token is unique.
 	if kv.IsNotFound(err) {
 		return nil
 	}
 
+	// no error means this is not unique
+	if err == nil {
+		return kv.NotUniqueError
+	}
+
+	// any other error is some sort of internal server error
+	return kv.UnexpectedIndexError(err)
+}
+
+// uniqueID returns nil if the ID provided is unique, returns an error otherwise
+func uniqueID(ctx context.Context, tx kv.Tx, id influxdb.ID) error {
+	encodedID, err := id.Encode()
+	if err != nil {
+		return ErrInvalidAuthID
+	}
+
+	b, err := tx.Bucket(authBucket)
+	if err != nil {
+		return ErrInternalServiceError(err)
+	}
+
+	_, err = b.Get(encodedID)
+	// if not found then the ID is unique
+	if kv.IsNotFound(err) {
+		return nil
+	}
 	// no error means this is not unique
 	if err == nil {
 		return kv.NotUniqueError
