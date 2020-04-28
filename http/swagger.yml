@@ -341,7 +341,7 @@ paths:
                 $ref: "#/components/schemas/Error"
   "/dbrp":
     get:
-      operationId: GetDBRPList
+      operationId: GetDBRPs
       tags:
         - DBRPEndpoints
       summary: List all database retention policy mapping
@@ -394,7 +394,7 @@ paths:
                 $ref: "#/components/schemas/Error"
   "/dbrp/{dbrpID}":
     get:
-      operationId: GetDBRPID
+      operationId: GetDBRPsID
       tags:
         - DBRPEndpoints
       summary: Get a database retention policy mapping

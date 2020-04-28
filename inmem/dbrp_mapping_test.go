@@ -18,26 +18,31 @@ func initDBRPMappingService(f platformtesting.DBRPMappingFields, t *testing.T) (
 }
 
 func TestDBRPMappingService_CreateDBRPMapping(t *testing.T) {
+	t.Skip("not needed anymore because we are moving to a new implementation of dbrp")
 	t.Parallel()
 	platformtesting.CreateDBRPMapping(initDBRPMappingService, t)
 }
 
 func TestDBRPMappingService_FindDBRPMappingByKey(t *testing.T) {
+	t.Skip("not needed anymore because we are moving to a new implementation of dbrp")
 	t.Parallel()
 	platformtesting.FindDBRPMappingByKey(initDBRPMappingService, t)
 }
 
 func TestDBRPMappingService_FindDBRPMappings(t *testing.T) {
+	t.Skip("not needed anymore because we are moving to a new implementation of dbrp")
 	t.Parallel()
 	platformtesting.FindDBRPMappings(initDBRPMappingService, t)
 }
 
 func TestDBRPMappingService_DeleteDBRPMapping(t *testing.T) {
+	t.Skip("not needed anymore because we are moving to a new implementation of dbrp")
 	t.Parallel()
 	platformtesting.DeleteDBRPMapping(initDBRPMappingService, t)
 }
 
 func TestDBRPMappingService_FindDBRPMapping(t *testing.T) {
+	t.Skip("not needed anymore because we are moving to a new implementation of dbrp")
 	t.Parallel()
 	platformtesting.FindDBRPMapping(initDBRPMappingService, t)
 }
