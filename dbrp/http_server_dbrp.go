@@ -132,7 +132,9 @@ func (h *DBRPHandler) handleGetDBRP(w http.ResponseWriter, r *http.Request) {
 
 func (h *DBRPHandler) handlePatchDBRP(w http.ResponseWriter, r *http.Request) {
 	bodyRequest := &struct {
-		Default bool `json:"content"`
+		Default         bool   `json:"content"`
+		RetentionPolicy string `json:"retention_policy"`
+		Database        string `json:"database"`
 	}{}
 
 	ctx := r.Context()
@@ -173,7 +175,17 @@ func (h *DBRPHandler) handlePatchDBRP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dbrp.Default = bodyRequest.Default
+	if dbrp.Default != bodyRequest.Default {
+		dbrp.Default = bodyRequest.Default
+	}
+
+	if bodyRequest.Database != "" && bodyRequest.Database != dbrp.Database {
+		dbrp.Database = bodyRequest.Database
+	}
+
+	if bodyRequest.RetentionPolicy != "" && bodyRequest.RetentionPolicy != dbrp.RetentionPolicy {
+		dbrp.RetentionPolicy = bodyRequest.RetentionPolicy
+	}
 
 	if err := h.dbrpSvc.Update(ctx, dbrp); err != nil {
 		h.api.Err(w, err)
