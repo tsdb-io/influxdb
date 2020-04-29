@@ -57,11 +57,7 @@ func (h *DBRPHandler) handlePostDBRP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.dbrpSvc.Create(ctx, dbrp); err != nil {
-		h.api.Err(w, &influxdb.Error{
-			Code: influxdb.ErrInvalidID.Code,
-			Err:  err,
-			Msg:  "impossible to create mapping",
-		})
+		h.api.Err(w, err)
 		return
 	}
 	h.api.Respond(w, http.StatusCreated, dbrp)
@@ -80,10 +76,7 @@ func (h *DBRPHandler) handleGetDBRPs(w http.ResponseWriter, r *http.Request) {
 
 	dbrps, _, err := h.dbrpSvc.FindMany(r.Context(), filter)
 	if err != nil {
-		h.api.Err(w, &influxdb.Error{
-			Code: influxdb.EInternal,
-			Err:  err,
-		})
+		h.api.Err(w, err)
 		return
 	}
 
