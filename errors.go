@@ -261,3 +261,49 @@ func decodeInternalError(target interface{}) error {
 type HTTPErrorHandler interface {
 	HandleHTTPError(ctx context.Context, err error, w http.ResponseWriter)
 }
+
+// HTTPStatusCodeToErrorCode maps a http status code integer to an
+// influxdb error code string.
+func HTTPStatusCodeToErrorCode(statusCode int) string {
+	errorCode, ok := httpStatusCodeToInfluxDBError[statusCode]
+	if ok {
+		return errorCode
+	}
+
+	return EInternal
+}
+
+// ErrorCodeToHTTPStatusCode maps an influxdb error code string to a
+// http status code integer.
+func ErrorCodeToHTTPStatusCode(code string) int {
+	statusCode, ok := influxDBErrorToStatusCode[code]
+	if ok {
+		return statusCode
+	}
+
+	return http.StatusInternalServerError
+}
+
+// influxDBErrorToStatusCode is a mapping of ErrorCode to http status code.
+var influxDBErrorToStatusCode = map[string]int{
+	EInternal:            http.StatusInternalServerError,
+	EInvalid:             http.StatusBadRequest,
+	EUnprocessableEntity: http.StatusUnprocessableEntity,
+	EEmptyValue:          http.StatusBadRequest,
+	EConflict:            http.StatusUnprocessableEntity,
+	ENotFound:            http.StatusNotFound,
+	EUnavailable:         http.StatusServiceUnavailable,
+	EForbidden:           http.StatusForbidden,
+	ETooManyRequests:     http.StatusTooManyRequests,
+	EUnauthorized:        http.StatusUnauthorized,
+	EMethodNotAllowed:    http.StatusMethodNotAllowed,
+	ETooLarge:            http.StatusRequestEntityTooLarge,
+}
+
+var httpStatusCodeToInfluxDBError = map[int]string{}
+
+func init() {
+	for k, v := range influxDBErrorToStatusCode {
+		httpStatusCodeToInfluxDBError[v] = k
+	}
+}

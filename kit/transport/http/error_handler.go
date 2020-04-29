@@ -21,13 +21,9 @@ func (h ErrorHandler) HandleHTTPError(ctx context.Context, err error, w http.Res
 	}
 
 	code := influxdb.ErrorCode(err)
-	httpCode, ok := statusCodePlatformError[code]
-	if !ok {
-		httpCode = http.StatusBadRequest
-	}
 	w.Header().Set(PlatformErrorCodeHeader, code)
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(httpCode)
+	w.WriteHeader(influxdb.ErrorCodeToHTTPStatusCode(code))
 	var e struct {
 		Code    string `json:"code"`
 		Message string `json:"message"`
