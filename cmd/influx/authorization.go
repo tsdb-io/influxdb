@@ -225,7 +225,7 @@ func authorizationCreateF(cmd *cobra.Command, args []string) error {
 		{
 			readPerm:     authCreateFlags.readDBRPPermission,
 			writePerm:    authCreateFlags.writeDBRPPermission,
-			ResourceType: platform.DBRPType,
+			ResourceType: platform.DBRPTResourceype,
 		},
 	}
 

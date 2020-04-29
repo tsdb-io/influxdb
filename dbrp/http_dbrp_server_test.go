@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap/zaptest"
 )
 
-func initBucketHttpService(t *testing.T) (*httptest.Server, func()) {
+func initBucketHttpService(t *testing.T) (influxdb.DBRPMappingServiceV2, *httptest.Server, func()) {
 	t.Helper()
 	ctx := context.Background()
 	bucketSvc := mock.NewBucketService()
@@ -29,7 +29,7 @@ func initBucketHttpService(t *testing.T) (*httptest.Server, func()) {
 	}
 
 	server := httptest.NewServer(dbrp.NewHTTPDBRPHandler(zaptest.NewLogger(t), svc))
-	return server, func() {
+	return svc, server, func() {
 		server.Close()
 	}
 }
@@ -76,7 +76,7 @@ func Test_handlePostDBRP(t *testing.T) {
 			if s.ExpectedErr != nil && s.ExpectedDBRP != nil {
 				t.Error("one of those has to be set")
 			}
-			server, shutdown := initBucketHttpService(t)
+			_, server, shutdown := initBucketHttpService(t)
 			defer shutdown()
 			client := server.Client()
 

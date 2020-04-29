@@ -14,7 +14,7 @@ type DBRPMappingAuthorzedService struct {
 }
 
 func (svc DBRPMappingAuthorzedService) FindByID(ctx context.Context, orgID influxdb.ID, id influxdb.ID) (*influxdb.DBRPMapping, error) {
-	if _, _, err := authorizer.AuthorizeRead(ctx, influxdb.DBRPType, id, orgID); err != nil {
+	if _, _, err := authorizer.AuthorizeRead(ctx, influxdb.DBRPTResourceype, id, orgID); err != nil {
 		return nil, ErrUnauthorized(err)
 	}
 
@@ -22,7 +22,7 @@ func (svc DBRPMappingAuthorzedService) FindByID(ctx context.Context, orgID influ
 }
 
 func (svc DBRPMappingAuthorzedService) FindMany(ctx context.Context, filter influxdb.DBRPMappingFilter, opts ...influxdb.FindOptions) ([]*influxdb.DBRPMapping, int, error) {
-	if _, _, err := authorizer.AuthorizeOrgReadResource(ctx, influxdb.DBRPType, *filter.OrgID); err != nil {
+	if _, _, err := authorizer.AuthorizeOrgReadResource(ctx, influxdb.DBRPTResourceype, *filter.OrgID); err != nil {
 		return nil, 0, ErrUnauthorized(err)
 	}
 
@@ -30,21 +30,21 @@ func (svc DBRPMappingAuthorzedService) FindMany(ctx context.Context, filter infl
 }
 
 func (svc DBRPMappingAuthorzedService) Create(ctx context.Context, t *influxdb.DBRPMapping) error {
-	if _, _, err := authorizer.AuthorizeOrgWriteResource(ctx, influxdb.DBRPType, t.OrganizationID); err != nil {
+	if _, _, err := authorizer.AuthorizeCreate(ctx, influxdb.DBRPTResourceype, t.OrganizationID); err != nil {
 		return ErrUnauthorized(err)
 	}
 	return svc.DBRPMappingServiceV2.Create(ctx, t)
 }
 
 func (svc DBRPMappingAuthorzedService) Update(ctx context.Context, u *influxdb.DBRPMapping) error {
-	if _, _, err := authorizer.AuthorizeWrite(ctx, influxdb.DBRPType, u.ID, u.OrganizationID); err != nil {
+	if _, _, err := authorizer.AuthorizeWrite(ctx, influxdb.DBRPTResourceype, u.ID, u.OrganizationID); err != nil {
 		return ErrUnauthorized(err)
 	}
 	return svc.Update(ctx, u)
 }
 
 func (svc DBRPMappingAuthorzedService) Delete(ctx context.Context, orgID influxdb.ID, id influxdb.ID) error {
-	if _, _, err := authorizer.AuthorizeWrite(ctx, influxdb.DBRPType, id, orgID); err != nil {
+	if _, _, err := authorizer.AuthorizeWrite(ctx, influxdb.DBRPTResourceype, id, orgID); err != nil {
 		return ErrUnauthorized(err)
 	}
 	return svc.Delete(ctx, orgID, id)

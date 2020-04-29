@@ -344,7 +344,7 @@ paths:
       operationId: GetDBRPs
       tags:
         - DBRPs
-      summary: List all database retention policy mapping
+      summary: List all database retention policy mappings
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
         - in: query
@@ -373,7 +373,7 @@ paths:
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
       requestBody:
-        description: database retention policy to add
+        description: The database retention policy mapping to add
         required: true
         content:
           application/json:
@@ -381,7 +381,7 @@ paths:
               $ref: "#/components/schemas/DBRP"
       responses:
         "201":
-          description: The label added to the template
+          description: Database retention policy mapping created
           content:
             application/json:
               schema:
@@ -397,7 +397,7 @@ paths:
       operationId: GetDBRPsID
       tags:
         - DBRPs
-      summary: Get a database retention policy mapping
+      summary: Retrieve a database retention policy ma
       parameters:
         - $ref: "#/components/parameters/TraceSpan"
         - in: query
@@ -430,7 +430,7 @@ paths:
         - DBRPs
       summary: Update a database retention policy mapping
       requestBody:
-        description: Check update to apply
+        description: Database retention policy update to apply
         required: true
         content:
           application/json:

@@ -130,7 +130,7 @@ const (
 	// ChecksResourceType gives permission to one or more Checks.
 	ChecksResourceType = ResourceType("checks") // 16
 	// DBRPType gives permission to one or more DBRPs.
-	DBRPType = ResourceType("dbrp") // 16
+	DBRPTResourceype = ResourceType("dbrp") // 16
 )
 
 // AllResourceTypes is the list of all known resource types.
@@ -152,7 +152,7 @@ var AllResourceTypes = []ResourceType{
 	NotificationRuleResourceType,     // 14
 	NotificationEndpointResourceType, // 15
 	ChecksResourceType,               // 16
-	DBRPType,                         // 17
+	DBRPTResourceype,                 // 17
 	// NOTE: when modifying this list, please update the swagger for components.schemas.Permission resource enum.
 }
 
@@ -170,7 +170,7 @@ var OrgResourceTypes = []ResourceType{
 	NotificationRuleResourceType,     // 14
 	NotificationEndpointResourceType, // 15
 	ChecksResourceType,               // 16
-	DBRPType,                         // 17
+	DBRPTResourceype,                 // 17
 }
 
 // Valid checks if the resource type is a member of the ResourceType enum.
@@ -198,7 +198,7 @@ func (t ResourceType) Valid() (err error) {
 	case NotificationRuleResourceType: // 14
 	case NotificationEndpointResourceType: // 15
 	case ChecksResourceType: // 16
-	case DBRPType: // 17
+	case DBRPTResourceype: // 17
 	default:
 		err = ErrInvalidResourceType
 	}
